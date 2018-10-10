@@ -175,9 +175,6 @@ end
 
 validate_current_attempt_file(src);
 
-% check.m
-{% include 'octave/check_functions.m' %}
-% check.m
 % varargin2struct.m
 {% include 'octave/jsonlab.m' %}
 
@@ -199,6 +196,9 @@ end
 
 
 function validation = validate_current_attempt_file(src)
+
+  {% include 'octave/check_functions.m' %}
+  % check.m
   file_parts = extract_solutions(src);
   check_initialize(file_parts);
   {% for part, _, token in parts %}
