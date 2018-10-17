@@ -28,14 +28,48 @@ function check_feedback(message)
   check.parts{check.part_counter}.feedback(end+1) = {message};
 end
 
+function S = leadsubmatrix(A,top)
+    if nargin<2, top = 3; end
+    n = size(A); n1 = min(top,n(1)); n2 = min(top,n(2));
+    S = mat2str(A(1:n1,1:n2));
+    if n(1)>top || n(2)>top
+        S = sprintf('%s (glavna podmatrika %dx%d)',S,n1,n2);
+    end
+end
+
 function res = check_equal(koda, rezultat, tol)
-  res = 0;
-  if nargin<3, tol = 1e-6; end
-  actual_result = eval(koda);
-  if any(size(actual_result) ~= size(rezultat)) || (norm(actual_result - rezultat) > tol) || any(any(isnan(actual_result) ~= isnan(rezultat)))
-    check_error(['Izraz ', koda, ' vrne ', mat2str(actual_result), ' namesto ', mat2str(rezultat)]);
-    res = 1;
-  end
+    % rezultat ne sme vsebovati Inf ali NaN, da bo primerjava mozna
+    res = 0;
+    if nargin<3, tol = 1e-6; end
+    % pogledamo, ce je rezultat polje, to uporabimo kadar funkcija vrne vec izhodnih podatkov
+    if iscell(rezultat)
+        nout = length(rezultat);
+    else
+        nout = 1;
+        % shranimo rezultat v polje velikosti ena, da bo primerjava potekala na isti nacin
+        tmp = rezultat;
+        rezultat = cell(1);
+        rezultat{1} = tmp;
+    end
+    % iz rezultata poberemo toliko izhodov, kot jih potrebujemo za preverjanje
+    odg = cell(1,nout);
+    [odg{:}] = eval(koda);
+    % preverimo vsako polje odgovora ce se ujema z danim rezultatom
+    for i = 1:nout
+        if nout>1
+            izhodstr = sprintf(' v %d. izhodu',i);
+        else
+            izhodstr = '';
+        end 
+        if length(size(odg{i})) ~= length(size(rezultat{i}))
+            check_error(sprintf('Izraz %s%s vrne tenzor reda %d namesto reda %d', koda,izhodstr,length(size(odg(i))),length(size(rezultat(i)))));
+        elseif any(size(odg{i}) ~= size(rezultat{i}))
+           check_error(sprintf('Izraz %s%s vrne matriko dimenzije %s namesto %s', koda,izhodstr,mat2str(size(odg{i})),mat2str(size(rezultat{i}))));
+        elseif (norm(odg{i} - rezultat{i},'fro') > tol) || any(isnan(odg{i}(:)))
+            check_error(sprintf('Izraz %s%s vrne %s namesto %s', koda,izhodstr,leadsubmatrix(odg{i}),leadsubmatrix(rezultat{i})));
+        res = 1;
+        end
+    end
 end
 
 function check_secret(x,hint)
@@ -47,6 +81,15 @@ function res = check_substring(koda, podniz)
   res = 0;
   if ~isempty(strfind(koda,podniz))
     check_error(['Resitev ne sme vsebovati niza ',podniz]);
+    res = 1;
+  end
+end
+
+function res = check_regexp(source_code, pattern)
+% Checks that given source code does not contain given pattern.
+  res = 0;
+  if ~isempty(regexp(source_code, pattern))
+    check_error(['Resitev ne sme vsebovati vzorca ', pattern]);
     res = 1;
   end
 end
