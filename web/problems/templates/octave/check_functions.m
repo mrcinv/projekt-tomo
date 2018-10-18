@@ -77,16 +77,18 @@ function check_secret(x,hint)
   check.parts{check.part_counter}.secret{end+1} = x;
 end
 
-function res = check_substring(koda, podniz)
+function res = check_substring(podniz)
+  koda = check.parts{check.part_counter}.solution;
   res = 0;
-  if ~isempty(strfind(koda,podniz))
+  if ~isempty(strfind(koda, podniz))
     check_error(['Resitev ne sme vsebovati niza ',podniz]);
     res = 1;
   end
 end
 
-function res = check_regexp(source_code, pattern)
+function res = check_regexp(pattern)
 % Checks that given source code does not contain given pattern.
+  source_code = check.parts{check.part_counter}.solution;
   res = 0;
   if ~isempty(regexp(source_code, pattern))
     check_error(['Resitev ne sme vsebovati vzorca ', pattern]);
